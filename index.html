@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人类艺术长廊 | Human Art Gallery</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --card-bg: #1a1a1a;
+            --text-main: #E0E0E0;
+            --text-muted: #888;
+            --accent: #C9A961;
+            --accent-light: #e8d5a8;
+            --border: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(201, 169, 97, 0.08) 0%, transparent 50%),
+                var(--bg-color);
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .hero-subtitle {
+            font-size: 0.85rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s 0.2s forwards;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 200;
+            letter-spacing: 8px;
+            margin-bottom: 1rem;
+            color: #fff;
+            opacity: 0;
+            animation: fadeInUp 1s 0.4s forwards;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero-en {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 1s 0.6s forwards;
+        }
+
+        .hero-desc {
+            max-width: 700px;
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 2;
+            margin-bottom: 4rem;
+            opacity: 0;
+            animation: fadeInUp 1s 0.8s forwards;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 4rem;
+            margin-bottom: 4rem;
+            opacity: 0;
+            animation: fadeInUp 1s 1s forwards;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 3rem;
+            font-weight: 200;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        /* Gallery Navigation */
+        .galleries {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s 1.2s forwards;
+        }
+
+        .gallery-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1.2rem 3rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            transition: all 0.4s ease;
+            min-width: 320px;
+        }
+
+        .gallery-link:hover {
+            border-color: var(--accent);
+            background: rgba(201, 169, 97, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .gallery-link .icon {
+            font-size: 1.5rem;
+        }
+
+        .gallery-link .label {
+            font-weight: 500;
+        }
+
+        .gallery-link .count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0.8rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+        }
+
+        .gallery-link.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Scroll Indicator */
+        .scroll-hint {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeInUp 1s 1.5s forwards, bounce 2s 2s infinite;
+        }
+
+        .scroll-hint::after {
+            content: '↓';
+            display: block;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Info Section */
+        .info-section {
+            padding: 6rem 2rem;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .info-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .info-section h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--accent);
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .info-card {
+            padding: 2rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .info-card h3 {
+            font-size: 1rem;
+            color: var(--accent-light);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .info-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        footer p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero-stats {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .gallery-link {
+                min-width: auto;
+                width: 100%;
+                padding: 1rem 2rem;
+            }
+
+            .galleries {
+                width: 100%;
+                max-width: 320px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <p class="hero-subtitle">From Prehistoric Caves to Digital Age</p>
+        <h1>人类艺术<span>长廊</span></h1>
+        <p class="hero-en">Human Art Gallery</p>
+        <p class="hero-desc">
+            一座以技法革新、流派创立、观念突破为核心标准的艺术史博物馆<br>
+            收录从史前洞窟到AI时代的400件里程碑作品
+        </p>
+
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-num">200</div>
+                <div class="stat-label">绘画作品</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">200</div>
+                <div class="stat-label">雕塑作品</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num">30000+</div>
+                <div class="stat-label">年艺术史</div>
+            </div>
+        </div>
+
+        <div class="galleries">
+            <a href="painting-001-020.html" class="gallery-link">
+                <span class="icon">🎨</span>
+                <span class="label">绘画长廊</span>
+                <span class="count">40/200</span>
+            </a>
+            <a href="#" class="gallery-link disabled">
+                <span class="icon">🗿</span>
+                <span class="label">雕塑长廊</span>
+                <span class="count">即将开放</span>
+            </a>
+        </div>
+
+        <div class="scroll-hint">了解更多</div>
+    </section>
+
+    <section class="info-section">
+        <div class="info-container">
+            <h2>收录标准</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>技法革新性</h3>
+                    <p>代表某种绘画/雕塑技术的首次应用或重大突破，如透视法、晕涂法、明暗对照法、油画媒介等。</p>
+                </div>
+                <div class="info-card">
+                    <h3>流派创立性</h3>
+                    <p>某个艺术运动的宣言式作品或开山之作，如印象派命名之作、立体派开端、至上主义创立等。</p>
+                </div>
+                <div class="info-card">
+                    <h3>观念突破性</h3>
+                    <p>挑战既有艺术定义，开启新创作思维的作品，如达达主义反艺术、观念艺术、NFT数字艺术等。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>
+            人类艺术长廊 © 2026 |
+            图片来源：各大博物馆开放获取计划 |
+            项目作者：<a href="#">saga su</a>
+        </p>
+    </footer>
+</body>
+</html>

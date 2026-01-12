@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘画艺术长廊 (1-20)</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1E1E1E;
+            --text-main: #E0E0E0;
+            --text-muted: #888;
+            --accent: #C9A961;
+            --border: #333;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); color: var(--text-main); line-height: 1.6; }
+        
+        /* Header */
+        header { padding: 3rem 1rem; text-align: center; background: var(--bg-color); border-bottom: 1px solid var(--border); }
+        header h1 { font-size: 2rem; font-weight: 300; margin-bottom: 0.5rem; color: var(--accent); letter-spacing: 2px; }
+        header p { color: var(--text-muted); font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* Navigation */
+        .nav-bar { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; flex-wrap: wrap; }
+        .nav-btn { 
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.6rem 1.8rem; 
+            border: 1px solid var(--border); 
+            border-radius: 50px; 
+            text-decoration: none; 
+            color: var(--text-muted); 
+            font-size: 0.9rem; 
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+            cursor: pointer;
+        }
+        .nav-btn:hover:not(.disabled):not(.active) { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+        .nav-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; cursor: default; pointer-events: none; }
+        .nav-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; background: transparent; }
+
+        /* Layout */
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+        
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 1.5rem; 
+        }
+        @media (min-width: 768px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1024px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1600px) { .grid { grid-template-columns: repeat(5, 1fr); } }
+        
+        /* Card */
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            overflow: hidden; 
+            border: 1px solid transparent;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            position: relative;
+        }
+        .card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            border-color: rgba(201, 169, 97, 0.3);
+        }
+        .card:hover .card-num { color: var(--accent); }
+        
+        .card-img-wrap { width: 100%; height: 220px; overflow: hidden; background: #000; }
+        .card img { 
+            width: 100%; height: 100%; object-fit: cover; display: block; 
+            transition: transform 0.5s ease;
+            opacity: 0; animation: fadeIn 0.8s forwards;
+        }
+        .card:hover img { transform: scale(1.05); }
+        
+        .card-body { padding: 1.2rem; }
+        .card-num { font-size: 0.75rem; color: #666; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.5rem; transition: color 0.3s; }
+        .card-title { font-size: 1.1rem; margin: 0 0 0.4rem; color: #fff; font-weight: 500; }
+        .card-year { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; backdrop-filter: blur(5px); }
+        .modal.show { display: block; animation: fadeIn 0.3s; }
+        
+        .modal-wrap { 
+            max-width: 1000px; margin: 3rem auto; 
+            background: var(--card-bg); 
+            border-radius: 12px; overflow: hidden; 
+            position: relative; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        
+        .modal-close { 
+            position: absolute; top: 1.5rem; right: 1.5rem; 
+            width: 40px; height: 40px; 
+            background: rgba(0,0,0,0.5); 
+            color: #fff;
+            border-radius: 50%; border: 1px solid rgba(255,255,255,0.2); 
+            font-size: 1.5rem; line-height: 38px; text-align: center; 
+            cursor: pointer; z-index: 20; transition: all 0.2s; 
+        }
+        .modal-close:hover { background: var(--accent); color: #000; border-color: var(--accent); transform: rotate(90deg); }
+
+        .modal-hero-container { position: relative; background: #000; text-align: center; }
+        .modal-hero { width: 100%; max-height: 70vh; object-fit: contain; display: block; margin: 0 auto; }
+        
+        .view-original-btn {
+            position: absolute; bottom: 20px; right: 20px;
+            background: rgba(0,0,0,0.7); color: #fff;
+            padding: 8px 20px; border-radius: 30px;
+            text-decoration: none; font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s;
+            display: flex; align-items: center; gap: 6px;
+            z-index: 10;
+        }
+        .view-original-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+
+        .modal-content { padding: 3rem; }
+        
+        .modal-header-text { margin-bottom: 2.5rem; border-bottom: 1px solid #333; padding-bottom: 1.5rem; }
+        .modal-title { font-size: 2.2rem; margin-bottom: 0.5rem; color: var(--accent); font-weight: 300; }
+        .modal-subtitle { font-size: 1.1rem; color: var(--text-muted); }
+        
+        .meta-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 2rem; 
+            background: #252525; 
+            padding: 2rem; 
+            border-radius: 8px; 
+            margin-bottom: 3rem; 
+            border: 1px solid #333;
+        }
+        .meta-item strong { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; letter-spacing: 1px; opacity: 0.8; }
+        .meta-item span { font-size: 1rem; color: #eee; font-weight: 400; }
+        
+        .info-section { margin-bottom: 3rem; }
+        .info-section h3 { 
+            font-size: 1.2rem; color: var(--accent); 
+            margin-bottom: 1.2rem; padding-bottom: 0.5rem; 
+            border-bottom: 1px solid #333; 
+            display: inline-block; 
+            font-weight: 400;
+        }
+        .info-section p { line-height: 1.8; color: #ccc; text-align: justify; font-size: 1.05rem; }
+        
+        .prompt-box { 
+            background: #151515; 
+            color: #aaa; 
+            padding: 1.5rem; 
+            border-radius: 6px; 
+            font-family: 'Monaco', 'Consolas', monospace; 
+            font-size: 0.9rem; 
+            line-height: 1.6; 
+            border: 1px solid #333;
+        }
+        .prompt-row { margin-bottom: 1.5rem; }
+        .prompt-row:last-child { margin-bottom: 0; }
+        .prompt-label { color: #666; font-weight: bold; margin-bottom: 0.5rem; display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .tips-box { 
+            background: rgba(201, 169, 97, 0.08); 
+            border-left: 3px solid var(--accent); 
+            padding: 1.5rem; 
+            color: #ddd; 
+            line-height: 1.7; 
+            font-style: italic;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #666; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>绘画艺术长廊</h1>
+        <p>人类文明的视觉史诗 (1-20)</p>
+    </header>
+    
+    <div class="nav-bar">
+        <a href="index.html" class="nav-btn">← 首页</a>
+        <span class="nav-btn active">001-020</span>
+        <a href="painting-021-040.html" class="nav-btn">021-040 →</a>
+        <span class="nav-btn disabled">041-060</span>
+    </div>
+
+    <div class="container">
+        <div class="grid" id="gallery"></div>
+    </div>
+    
+    <div class="modal" id="modal">
+        <div class="modal-wrap">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const artworks = [
+            {
+                id: 1, 
+                title: "拉斯科洞窟《大黑牛》", 
+                year: "约公元前15,000年", 
+                img: "https://cdn.gooo.ai/web-images/67112561a61f74116e2298afd2f85c4afe123e2e91cd3eca0224182b8774bfce",
+                metadata: { creator: "史前艺术家", medium: "矿物颜料、木炭", size: "长约5米", location: "法国拉斯科洞窟" },
+                breakthrough: "利用岩壁的自然起伏创造立体感，展现了惊人的动态捕捉能力和'扭曲透视'技法（牛头侧面，牛角正面）。",
+                significance: "被誉为'史前西斯廷教堂'，证明了早期人类已具备复杂的象征思维和极高的艺术表现力，是人类童年时期的艺术巅峰。",
+                prompts: {
+                    cn: "史前洞窟壁画，拉斯科风格，粗犷的岩石纹理，一头巨大的黑色野牛在奔跑，赭石色和黑色矿物颜料，火光摇曳的氛围，原始艺术。",
+                    en: "Prehistoric cave painting, Lascaux style, rough rock texture, a massive black bull running, ochre and black mineral pigments, flickering torchlight atmosphere, primitive art."
+                },
+                tips: "注意模拟岩石表面的粗糙质感，使用大地色系（红赭、黄土、炭黑），强调线条的力度和动物的动态轮廓。"
+            },
+            {
+                id: 2, 
+                title: "阿尔塔米拉《受伤的野牛》", 
+                year: "约公元前12,000年", 
+                img: "https://cdn.gooo.ai/web-images/acc424da179449e991cf1a32e55cca9e586cb4bf7836dba7f1b11a299509b97f@chat",
+                metadata: { creator: "马格德林文化艺术家", medium: "矿物颜料", size: "真人大小", location: "西班牙阿尔塔米拉洞窟" },
+                breakthrough: "巧妙利用岩石的凸起表现野牛的肌肉体积，色彩丰富（多色画），展现了极高的写实技巧和解剖学认知。",
+                significance: "第一处被发现的旧石器时代壁画，彻底改变了现代人对史前人类智力与艺术能力的认知。",
+                prompts: {
+                    cn: "阿尔塔米拉洞窟壁画，蜷缩的受伤野牛，利用岩石凸起表现体积感，红黑相间，充满生命力的原始笔触，古老神秘。",
+                    en: "Altamira cave painting, curled injured bison, using rock protrusions for volume, red and black, lively primitive strokes, ancient and mysterious."
+                },
+                tips: "利用明暗对比增强体积感，模仿在凹凸不平表面作画的效果，色彩要厚重且具有矿物感。"
+            },
+            {
+                id: 3, 
+                title: "埃及《纳芙蒂蒂王后墓室壁画》", 
+                year: "约公元前1340年", 
+                img: "https://cdn.gooo.ai/web-images/bb13a6f88ebcb389b48a3cc9b42350dfae52988cbe5de9101d28acaf92d4db76",
+                metadata: { creator: "古埃及皇家画师", medium: "灰泥壁画", size: "真人大小", location: "埃及帝王谷" },
+                breakthrough: "典型的'正面律'法则，头部侧面，眼睛正面，肩部正面。线条流畅优美，色彩鲜艳且具有象征意义（金色代表神性）。",
+                significance: "展示了古埃及艺术对永恒与秩序的追求，纳芙蒂蒂作为'最美的女人'，其形象代表了埃及新王国时期的审美巅峰。",
+                prompts: {
+                    cn: "古埃及壁画，纳芙蒂蒂王后，侧面像，精美的头饰和珠宝，象形文字背景，金色和青金石色，扁平化风格，庄严神圣。",
+                    en: "Ancient Egyptian mural, Queen Nefertiti, profile view, exquisite headdress and jewelry, hieroglyphic background, gold and lapis lazuli colors, flat style, solemn and divine."
+                },
+                tips: "严格遵守正面律构图，使用平涂色彩不加阴影，强调轮廓线的精准与优雅。"
+            },
+            {
+                id: 4, 
+                title: "庞贝城《花园》湿壁画", 
+                year: "约公元前50年", 
+                img: "https://cdn.gooo.ai/web-images/151a4a1f2d481dfb80c1c01ecd357cdb2c80519d5c1f5c7b89b5a4c8eedc2b62@chat",
+                metadata: { creator: "罗马画师", medium: "湿壁画", size: "墙面尺寸", location: "意大利庞贝古城" },
+                breakthrough: "运用了空气透视法（远处物体模糊发蓝）和直观透视，试图在二维墙面上创造三维空间错觉（Trompe-l'œil）。",
+                significance: "古罗马装饰艺术的杰作，反映了当时人们对自然的热爱和生活情趣，为后世风景画奠定了基础。",
+                prompts: {
+                    cn: "庞贝古城湿壁画，繁茂的花园，果树和飞鸟，空气透视感，优雅的罗马风格，自然主义，柔和的绿色和赭色。",
+                    en: "Pompeii fresco, lush garden, fruit trees and birds, atmospheric perspective, elegant Roman style, naturalism, soft greens and ochres."
+                },
+                tips: "注意远近景的虚实处理，前景清晰鲜艳，背景柔和模糊，营造空间深度。"
+            },
+            {
+                id: 5, 
+                title: "拜占庭《查士丁尼与侍从》", 
+                year: "547年", 
+                img: "https://cdn.gooo.ai/web-images/03dcd37fa8185de51029c0e3307dc8ab7d0e415985570f9b651b42cc6241d46f@chat",
+                metadata: { creator: "拜占庭工匠", medium: "马赛克镶嵌画", size: "2.64 x 3.65米", location: "意大利拉文纳圣维塔教堂" },
+                breakthrough: "使用反向透视和金色背景，人物悬浮无影，强调精神世界的超然与神圣，而非现实空间的物理真实。",
+                significance: "拜占庭艺术的巅峰之作，政教合一的完美象征，确立了中世纪早期欧洲艺术的范式。",
+                prompts: {
+                    cn: "拜占庭马赛克镶嵌画，查士丁尼大帝，金色背景，华丽的皇袍，神圣的光环，扁平化人物，玻璃和金箔质感，庄严肃穆。",
+                    en: "Byzantine mosaic, Emperor Justinian, gold background, ornate imperial robes, holy halo, flat figures, glass and gold leaf texture, solemn."
+                },
+                tips: "模拟马赛克的拼贴质感，使用大量的金色和鲜艳的原色，人物姿态要僵直庄重。"
+            },
+            {
+                id: 6, 
+                title: "顾恺之《洛神赋图》", 
+                year: "约400年", 
+                img: "https://cdn.gooo.ai/web-images/8a609736b3eb2110f528380e46e81f64fb5d2e23236ebb58d0192bc2256221c8",
+                metadata: { creator: "顾恺之 (东晋)", medium: "绢本设色", size: "27.1 x 572.8厘米", location: "北京故宫博物院 (宋摹本)" },
+                breakthrough: "创造了'春蚕吐丝'般连绵不断的线条（高古游丝描），实现了'以形写神'的美学追求，时空连续的叙事构图。",
+                significance: "中国绘画史上的里程碑，将文学作品完美转化为视觉艺术，确立了中国画'传神'的核心美学。",
+                prompts: {
+                    cn: "中国传统水墨画，洛神赋图风格，顾恺之，高古游丝描，飘逸的仙女，水面凌波微步，古典山水背景，绢本质感，淡雅色彩。",
+                    en: "Traditional Chinese ink painting, Nymph of the Luo River style, Gu Kaizhi, fine continuous lines, ethereal goddess, walking on water waves, classical landscape background, silk texture, elegant pale colors."
+                },
+                tips: "线条要细劲圆润，如春蚕吐丝，人物衣带要有飘举之势，色彩古朴淡雅。"
+            },
+            {
+                id: 7, 
+                title: "展子虔《游春图》", 
+                year: "约600年", 
+                img: "https://cdn.gooo.ai/web-images/2ca1fceda06b9b9448e5c31325b3f93ea56ec388d6ac0cd165d2b50f39ecb9dc",
+                metadata: { creator: "展子虔 (隋)", medium: "绢本设色", size: "43 x 80.5厘米", location: "北京故宫博物院" },
+                breakthrough: "解决了'人大于山，水不容泛'的早期稚拙，实现了山水画的空间透视（咫尺千里），开创青绿山水技法。",
+                significance: "现存最古老的独立山水画，标志着中国山水画的成熟，'唐画之祖'。",
+                prompts: {
+                    cn: "中国青绿山水画，游春图风格，展子虔，春山绿水，细致的楼阁人物，空远的空间感，金碧辉煌，古典雅致。",
+                    en: "Chinese blue-green landscape painting, Strolling About in Spring style, Zhan Ziqian, spring mountains and green waters, detailed pavilions and tiny figures, spacious atmosphere, gold and blue-green style, classical elegance."
+                },
+                tips: "使用石青、石绿为主色调，注意勾线填色，表现出春天的明媚与空间的深远。"
+            },
+            {
+                id: 8, 
+                title: "契马布埃《圣母与圣婴》", 
+                year: "约1280年", 
+                img: "https://cdn.gooo.ai/web-images/8797a2bab1464bf87481380f81e3acf534f453dab990e8b3080382cbdbba4214@chat",
+                metadata: { creator: "契马布埃", medium: "木板蛋彩画", size: "385 x 223厘米", location: "佛罗伦萨乌菲齐美术馆" },
+                breakthrough: "在拜占庭程式化风格中注入了初步的情感与体积感，衣褶处理开始尝试表现身体结构，打破了绝对的平面化。",
+                significance: "意大利文艺复兴的先声，连接中世纪与文艺复兴的桥梁，乔托的老师。",
+                prompts: {
+                    cn: "中世纪蛋彩画，圣母子像，契马布埃风格，金色背景，宝座上的圣母，天使环绕，拜占庭风格但带有体积感，庄重神圣。",
+                    en: "Medieval tempera painting, Madonna and Child, Cimabue style, gold background, enthroned Virgin, surrounded by angels, Byzantine style with hints of volume, solemn and holy."
+                },
+                tips: "保留金色背景的装饰性，但在人物面部和衣褶上尝试用明暗表现微弱的立体感。"
+            },
+            {
+                id: 9, 
+                title: "乔托《哀悼基督》", 
+                year: "约1305年", 
+                img: "https://cdn.gooo.ai/web-images/21ff96dcba95179157a2a513d8cccbc5697979845cd0c73eeca219834ff488ff@chat",
+                metadata: { creator: "乔托", medium: "湿壁画", size: "200 x 185厘米", location: "帕多瓦斯克罗DateTimeField尼礼拜堂" },
+                breakthrough: "赋予人物真实的重量感和强烈的情感表达，创造了具有深度的舞台式空间，彻底摆脱了中世纪的僵硬。",
+                significance: "西方绘画之父，文艺复兴的真正开端，将绘画从神学的图解转变为人类情感的戏剧。",
+                prompts: {
+                    cn: "乔托湿壁画，哀悼基督，强烈的情感悲痛，天使在天空哭泣，人物具有雕塑般的体积感，蓝色天空背景，戏剧性构图。",
+                    en: "Giotto fresco, Lamentation of Christ, intense grief and emotion, angels weeping in the sky, figures with sculptural volume, blue sky background, dramatic composition."
+                },
+                tips: "注重人物的块面感和重量感，通过人物的背影和眼神交流引导视线，背景使用深蓝色。"
+            },
+            {
+                id: 10, 
+                title: "杜乔《圣母宝座图》", 
+                year: "1308-1311年", 
+                img: "https://cdn.gooo.ai/web-images/d182bcc75b31a218807d036d0928baedb4710d95356db81b01b954877a086c1f",
+                metadata: { creator: "杜乔", medium: "木板蛋彩画", size: "213 x 396厘米", location: "锡耶纳大教堂博物馆" },
+                breakthrough: "融合了拜占庭的庄严与哥特式的抒情线条，色彩柔和华丽，构图宏大且具有一定的透视尝试。",
+                significance: "锡耶纳画派的巅峰，展示了与佛罗伦萨画派不同的装饰性与抒情性美学。",
+                prompts: {
+                    cn: "杜乔圣母宝座图，锡耶纳画派，金色背景，众多圣徒和天使，色彩华丽柔和，线条优雅流畅，装饰性强，宏大构图。",
+                    en: "Duccio Maesta, Sienese school, gold background, multitude of saints and angels, rich and soft colors, elegant flowing lines, highly decorative, grand composition."
+                },
+                tips: "强调色彩的和谐与线条的韵律，人物排列要有秩序感，细节装饰要精致。"
+            },
+            {
+                id: 11, 
+                title: "杨·凡·艾克《根特祭坛画》", 
+                year: "1432年", 
+                img: "https://cdn.gooo.ai/web-images/c923595dfef917bef54c252437db2fe15583808b4f9beb607e2352078f8f02d3",
+                metadata: { creator: "杨·凡·艾克", medium: "木板油画", size: "3.4 x 4.6米 (打开状态)", location: "比利时根特圣巴夫大教堂" },
+                breakthrough: "完善了油画技法，利用透明罩染法创造了前所未有的光影质感和微观细节，宝石、织物栩栩如生。",
+                significance: "北方文艺复兴的最高杰作，油画艺术的奠基之作，将写实主义推向了极致。",
+                prompts: {
+                    cn: "北方文艺复兴，根特祭坛画，杨·凡·艾克，极致的细节，油画质感，宝石和锦缎的光泽，神圣的氛围，写实主义。",
+                    en: "Northern Renaissance, Ghent Altarpiece, Jan van Eyck, extreme detail, oil painting texture, luster of gems and brocade, divine atmosphere, realism."
+                },
+                tips: "使用多层罩染表现透明感和光泽，注重微小细节的刻画（如反光、纹理），光线要统一且柔和。"
+            },
+            {
+                id: 12, 
+                title: "马萨乔《圣三位一体》", 
+                year: "1427年", 
+                img: "https://cdn.gooo.ai/web-images/0269f2b3368cfdb91af3ff911a3450039fcf363ffca0cfc4ce01b175e39c7e69",
+                metadata: { creator: "马萨乔", medium: "湿壁画", size: "667 x 317厘米", location: "佛罗伦萨新圣母大殿" },
+                breakthrough: "首次在绘画中完美应用布鲁内莱斯基的科学线性透视法，创造了真实的建筑空间错觉。",
+                significance: "早期文艺复兴的宣言书，确立了透视法作为西方绘画核心技法的地位。",
+                prompts: {
+                    cn: "马萨乔湿壁画，圣三位一体，科学线性透视，拱顶建筑空间，骷髅冢，沉稳的色彩，理性与神圣的结合。",
+                    en: "Masaccio fresco, Holy Trinity, scientific linear perspective, vaulted architectural space, memento mori skeleton, somber colors, combination of reason and divinity."
+                },
+                tips: "严格按照透视灭点构图，建筑结构要精准，人物大小随距离变化，营造深邃的空间感。"
+            },
+            {
+                id: 13, 
+                title: "弗拉·安吉利科《天使报喜》", 
+                year: "约1440年", 
+                img: "https://cdn.gooo.ai/web-images/87c2c4ea26de0b3b7c548dd37095b3b6bb8ac6f79a329d7d595f259031c67a0d",
+                metadata: { creator: "弗拉·安吉利科", medium: "湿壁画", size: "230 x 321厘米", location: "佛罗伦萨圣马可修道院" },
+                breakthrough: "将透视空间与神圣光辉完美结合，色彩清淡高雅，人物姿态谦卑，营造出静谧的灵性氛围。",
+                significance: "修士画家的代表作，展示了文艺复兴早期宗教虔诚与人文主义技法的和谐统一。",
+                prompts: {
+                    cn: "弗拉·安吉利科，天使报喜，湿壁画，拱廊建筑，柔和的光线，粉色和蓝色的淡雅色彩，宁静神圣，天使加百列与玛利亚。",
+                    en: "Fra Angelico, Annunciation, fresco, arcade architecture, soft light, pale pink and blue colors, serene and holy, Angel Gabriel and Mary."
+                },
+                tips: "色彩要纯净明亮，光线柔和不刺眼，建筑透视要准确但服务于宁静的氛围。"
+            },
+            {
+                id: 14, 
+                title: "保罗·乌切洛《圣罗马诺之战》", 
+                year: "约1438年", 
+                img: "https://cdn.gooo.ai/web-images/d0ecaa6f85f9771931e56dd9cafedab04fd45472aa64fe0b7f78593425b0c26d@chat",
+                metadata: { creator: "保罗·乌切洛", medium: "木板蛋彩画", size: "182 x 320厘米", location: "伦敦国家美术馆/乌菲齐/卢浮宫" },
+                breakthrough: "对透视法的狂热实验，通过倒下的士兵和长矛刻意构建透视网格，虽然略显生硬但极具探索精神。",
+                significance: "反映了文艺复兴早期对科学透视的痴迷，画面具有独特的舞台感和装饰性。",
+                prompts: {
+                    cn: "保罗·乌切洛，圣罗马诺之战，复杂的透视实验，骑士与长矛，几何化的马匹，深色背景，装饰性强，文艺复兴早期战争场面。",
+                    en: "Paolo Uccello, Battle of San Romano, complex perspective experiment, knights and lances, geometric horses, dark background, decorative, early Renaissance battle scene."
+                },
+                tips: "强调物体在空间中的几何透视关系，色彩可以略带装饰性，不必完全写实。"
+            },
+            {
+                id: 15, 
+                title: "皮耶罗《基督受洗》", 
+                year: "约1450年", 
+                img: "https://cdn.gooo.ai/web-images/d6f9600bebc83ebb203889f7859859aa49a69ec3f362cbe075fb5cf3338f6f19",
+                metadata: { creator: "皮耶罗·德拉·弗朗切斯卡", medium: "木板蛋彩画", size: "167 x 116厘米", location: "伦敦国家美术馆" },
+                breakthrough: "几何学的完美应用，构图严谨（圆与方），光线清澈透明（银灰色调），人物如雕塑般静穆。",
+                significance: "数学与艺术的完美结合，展现了理性主义的最高境界，对后世塞尚等有深远影响。",
+                prompts: {
+                    cn: "皮耶罗·德拉·弗朗切斯卡，基督受洗，苍白的皮肤，银灰色的光线，几何构图，静穆的氛围，托斯卡纳风景背景。",
+                    en: "Piero della Francesca, Baptism of Christ, pale skin, silvery light, geometric composition, serene atmosphere, Tuscan landscape background."
+                },
+                tips: "构图要追求几何平衡，光线要均匀且冷峻，人物表情要平静无波。"
+            },
+            {
+                id: 16, 
+                title: "波提切利《维纳斯的诞生》", 
+                year: "约1485年", 
+                img: "https://cdn.gooo.ai/web-images/e3fbbd3508022734a571b6c9194b6f1e3c5f236865a91bbaa76006a2ae1535fd@chat",
+                metadata: { creator: "桑德罗·波提切利", medium: "画布蛋彩画", size: "172.5 x 278.9厘米", location: "佛罗伦萨乌菲齐美术馆" },
+                breakthrough: "强调线条的韵律美，牺牲了解剖的准确性（长脖子、溜肩）以换取优雅的姿态，具有新柏拉图主义的象征性。",
+                significance: "佛罗伦萨黄金时代的象征，首次大规模描绘异教神话裸体，美的永恒典范。",
+                prompts: {
+                    cn: "波提切利，维纳斯的诞生，站在贝壳上的女神，飘逸的金发，风神与花神，优雅的线条，淡雅的色彩，神话场景。",
+                    en: "Botticelli, The Birth of Venus, goddess standing on a shell, flowing golden hair, Zephyr and Flora, elegant lines, pastel colors, mythological scene."
+                },
+                tips: "注重轮廓线的优美与节奏，色彩要清淡柔和，人物姿态要优雅S型（哥特式曲线）。"
+            },
+            {
+                id: 17, 
+                title: "达·芬奇《最后的晚餐》", 
+                year: "1495-1498年", 
+                img: "https://cdn.gooo.ai/web-images/17a441f5219b1fb418cd02d7927e7b8799121d2a7a33f2b9bac15f472d405b63@chat",
+                metadata: { creator: "列奥纳多·达·芬奇", medium: "油彩与蛋彩混合", size: "4.6 x 8.8米", location: "米兰恩宠圣母修道院" },
+                breakthrough: "完美的心理描写与构图结合，通过'三人一组'的动态打破了呆板的排列，透视焦点集中于基督。",
+                significance: "盛期文艺复兴的巅峰，人类艺术史上最著名的宗教画，深刻影响了后世的构图美学。",
+                prompts: {
+                    cn: "达芬奇，最后的晚餐，长桌，耶稣在中央，十二门徒惊讶的表情，透视构图，戏剧性瞬间，经典艺术。",
+                    en: "Da Vinci, The Last Supper, long table, Jesus in center, twelve apostles with shocked expressions, perspective composition, dramatic moment, classic art."
+                },
+                tips: "构图要严格对称，透视线汇聚于中心人物，重点刻画不同人物的心理反应和手势。"
+            },
+            {
+                id: 18, 
+                title: "达·芬奇《蒙娜丽莎》", 
+                year: "1503-1519年", 
+                img: "https://cdn.gooo.ai/web-images/393ba286ba82c9633117314a393e0641e47cfa214af5663e2323a20af52306de",
+                metadata: { creator: "列奥纳多·达·芬奇", medium: "木板油画", size: "77 x 53厘米", location: "巴黎卢浮宫" },
+                breakthrough: "登峰造极的'晕涂法'（Sfumato），轮廓模糊柔和，创造了神秘的微笑和深邃的大气透视背景。",
+                significance: "世界上最著名的肖像画，确立了四分之三侧面肖像的标准，展现了人的内心世界与自然的和谐。",
+                prompts: {
+                    cn: "蒙娜丽莎，达芬奇风格，神秘的微笑，晕涂法，柔和的光影，深邃的风景背景，文艺复兴肖像，油画质感。",
+                    en: "Mona Lisa, Da Vinci style, mysterious smile, sfumato technique, soft chiaroscuro, atmospheric landscape background, Renaissance portrait, oil painting texture."
+                },
+                tips: "避免生硬的轮廓线，使用多层透明罩染，让光影自然过渡，背景要虚化表现空气感。"
+            },
+            {
+                id: 19, 
+                title: "拉斐尔《雅典学院》", 
+                year: "1509-1511年", 
+                img: "https://cdn.gooo.ai/web-images/69ece9b5a6e7c8682c241eed5b23785ec2d44cd5a3242736de3f54a3b6512108@chat",
+                metadata: { creator: "拉斐尔", medium: "湿壁画", size: "500 x 770厘米", location: "梵蒂冈博物馆" },
+                breakthrough: "宏大的建筑空间与众多人物的完美调度，展现了古典主义的和谐、平衡与优美，柏拉图与亚里士多德的哲学象征。",
+                significance: "文艺复兴人文主义精神的最高体现，知识、真理与美的殿堂。",
+                prompts: {
+                    cn: "拉斐尔，雅典学院，宏伟的古典建筑，众多哲学家，柏拉图和亚里士多德在中央，透视感极强，色彩明快和谐，智慧的象征。",
+                    en: "Raphael, School of Athens, magnificent classical architecture, many philosophers, Plato and Aristotle in center, strong perspective, bright and harmonious colors, symbol of wisdom."
+                },
+                tips: "构图要宏大且井然有序，人物分组要有聚散变化，色彩要丰富且和谐统一。"
+            },
+            {
+                id: 20, 
+                title: "米开朗基罗《创造亚当》", 
+                year: "1508-1512年", 
+                img: "https://cdn.gooo.ai/web-images/b5a918e91f340fcbc3c1c77b67e22fb69b8008d5f92d9c1f494dc241680ec212@chat",
+                metadata: { creator: "米开朗基罗", medium: "湿壁画", size: "280 x 570厘米", location: "梵蒂冈西斯廷礼拜堂" },
+                breakthrough: "雕塑般的人体造型，充满张力的构图（指尖接触的瞬间），将上帝描绘为充满力量的老者而非威严的君王。",
+                significance: "西斯廷天顶画的核心，人本主义的颂歌，赞美了人体的美与力量，艺术史上最经典的瞬间。",
+                prompts: {
+                    cn: "米开朗基罗，创造亚当，上帝与亚当指尖相触，健美的肌肉线条，雕塑感，戏剧性张力，西斯廷天顶画风格，神圣时刻。",
+                    en: "Michelangelo, Creation of Adam, God and Adam touching fingertips, muscular anatomy, sculptural quality, dramatic tension, Sistine Chapel style, divine moment."
+                },
+                tips: "强调人体的肌肉结构和力量感，构图要聚焦于两指之间的'空隙'，色彩要清晰有力。"
+            }
+        ];
+        
+        // Manual mapping for better accuracy, fallback to search
+        const wikiLinks = {
+            1: "https://www.wikiart.org/en/search/Lascaux",
+            2: "https://www.wikiart.org/en/search/Altamira",
+            3: "https://www.wikiart.org/en/search/Nefertiti",
+            4: "https://www.wikiart.org/en/search/Pompeii",
+            5: "https://www.wikiart.org/en/search/Justinian",
+            6: "https://www.wikiart.org/en/gu-kaizhi/nymph-of-the-luo-river",
+            7: "https://www.wikiart.org/en/search/Zhan%20Ziqian",
+            8: "https://www.wikiart.org/en/cimabue/madonna-enthroned-with-the-child-st-francis-and-four-angels",
+            9: "https://www.wikiart.org/en/giotto/lamentation-the-mourning-of-christ-1306",
+            10: "https://www.wikiart.org/en/duccio/maesta",
+            11: "https://www.wikiart.org/en/jan-van-eyck/the-ghent-altarpiece-singing-angels-1429",
+            12: "https://www.wikiart.org/en/masaccio/holy-trinity-1428",
+            13: "https://www.wikiart.org/en/fra-angelico/the-annunciation-1450",
+            14: "https://www.wikiart.org/en/paolo-uccello/the-battle-of-san-romano-1440",
+            15: "https://www.wikiart.org/en/piero-della-francesca/baptism-of-christ-1442",
+            16: "https://www.wikiart.org/en/sandro-botticelli/the-birth-of-venus-1485",
+            17: "https://www.wikiart.org/en/leonardo-da-vinci/the-last-supper-1498",
+            18: "https://www.wikiart.org/en/leonardo-da-vinci/mona-lisa",
+            19: "https://www.wikiart.org/en/raphael/school-of-athens-1511",
+            20: "https://www.wikiart.org/en/michelangelo/the-creation-of-adam-1512"
+        };
+
+        const gallery = document.getElementById('gallery');
+        
+        function createCard(art) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openModal(art);
+            card.innerHTML = `
+                <div class="card-img-wrap">
+                    <img src="${art.img}" alt="${art.title}" loading="lazy">
+                </div>
+                <div class="card-body">
+                    <div class="card-num">NO.${String(art.id).padStart(3,'0')}</div>
+                    <div class="card-title">${art.title}</div>
+                    <div class="card-year">${art.year}</div>
+                </div>
+            `;
+            gallery.appendChild(card);
+        }
+
+        // Render cards with simple stagger animation logic
+        artworks.forEach((art, index) => {
+            setTimeout(() => createCard(art), index * 50);
+        });
+        
+        function openModal(art) {
+            // Determine the original link
+            let originalUrl = wikiLinks[art.id];
+            if (!originalUrl) {
+                // Fallback: Extract title from 《...》 and search
+                const match = art.title.match(/《(.*?)》/);
+                const query = match ? match[1] : art.title;
+                originalUrl = `https://www.wikiart.org/en/search/${encodeURIComponent(query)}`;
+            }
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="modal-hero-container">
+                    <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" class="view-original-btn">🔍 查看原图</a>
+                    <img src="${art.img}" alt="${art.title}" class="modal-hero">
+                </div>
+                <div class="modal-content">
+                    <div class="modal-header-text">
+                        <h2 class="modal-title">${art.title}</h2>
+                        <div class="modal-subtitle">${art.year}</div>
+                    </div>
+                    
+                    <div class="meta-grid">
+                        <div class="meta-item"><strong>创作者</strong><span>${art.metadata.creator}</span></div>
+                        <div class="meta-item"><strong>材质</strong><span>${art.metadata.medium}</span></div>
+                        <div class="meta-item"><strong>尺寸</strong><span>${art.metadata.size}</span></div>
+                        <div class="meta-item"><strong>收藏地</strong><span>${art.metadata.location}</span></div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>技法突破点</h3>
+                        <p>${art.breakthrough}</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>历史意义</h3>
+                        <p>${art.significance}</p>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>AI 绘画提示词</h3>
+                        <div class="prompt-box">
+                            <div class="prompt-row">
+                                <span class="prompt-label">Chinese Prompt</span>
+                                ${art.prompts.cn}
+                            </div>
+                            <div class="prompt-row">
+                                <span class="prompt-label">English Prompt</span>
+                                ${art.prompts.en}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>技术要点</h3>
+                        <div class="tips-box">
+                            ${art.tips}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        document.getElementById('modal').onclick = function(e) {
+            if(e.target === this) closeModal();
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>
